@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import confetti from 'canvas-confetti';
 
 const TURNS = {
   X: 'x',
@@ -35,7 +36,7 @@ const Square = ({ children, updateBoard, index = 0, isSelected }: SquareProps) =
 function App() {
   const [currentTurn, setCurrentTurn] = useState(TURNS.X);
   const [board, setBoard] = useState(Array(9).fill(null));
-  const [winner, setWinner] = useState<string | null>(null);
+  const [winner, setWinner] = useState<string | boolean | null>(null);
 
   const handleClick = (squarePosition: number) => {
     if (winner) return;
@@ -49,10 +50,11 @@ function App() {
 
   const checkWinner = (newBoard: string[]) => {
     const winnerCombo = validateFilled(newBoard);
-    console.log(winnerCombo);
-
     if (winnerCombo) {
+      confetti();
       setWinner(winnerCombo);
+    } else if (checkEndGame(newBoard)) {
+      setWinner(false);
     }
   };
 
@@ -66,9 +68,19 @@ function App() {
     return null;
   };
 
+  const checkEndGame = (board: string[]) => {
+    return board.every(square => square !== null);
+  };
+
+  const resetGame = () => {
+    setBoard(Array(9).fill(null));
+    setCurrentTurn(TURNS.X);
+    setWinner(null);
+  };
   return (
     <main className="board">
       <h1>Tic Tac Toe</h1>
+      <button onClick={resetGame}>Empezar de nuevo</button>
       <section className="game">
         {board.map((square, index) => (
           <Square key={index} index={index} updateBoard={handleClick}>
@@ -80,7 +92,19 @@ function App() {
         <Square isSelected={currentTurn === TURNS.X}>{TURNS.X}</Square>
         <Square isSelected={currentTurn === TURNS.O}>{TURNS.O}</Square>
       </section>
-      {winner && <h3>El ganador es: {winner}</h3>}
+      {winner !== null && (
+        <section className="winner">
+          <div className="text">
+            <h2>{winner === false ? 'Empate' : 'Ganó: '}</h2>
+            <header className="win">
+              {typeof winner === 'string' && <Square>{winner}</Square>}
+            </header>
+            <footer>
+              <button onClick={resetGame}>Empezar de nuevo</button>
+            </footer>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
